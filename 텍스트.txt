@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8" />
+<title>대형 사전 퀴즈 (자동 선택)</title>
+<style>
+  body { font-family: Arial, sans-serif; text-align: center; margin-top: 40px; }
+  #prompt { font-size: 20px; margin-bottom: 15px; }
+  .choice { display:inline-block; padding: 10px 18px; margin: 6px; border:1px solid #333; cursor:pointer; }
+  .correct { background-color: lightgreen; }
+  .wrong { background-color: #fca5a5; }
+  #ai { margin-top: 12px; color: #333; font-weight: bold; }
+</style>
+</head>
+<body>
+  <h1>대형 사전 퀴즈 — AI 자동 선택</h1>
+  <div id="prompt">로딩 중...</div>
+  <div id="choices"></div>
+  <div id="ai"></div>
+
+<script>
+const API = '/api/quiz?choices=4'; // 서버 루트에 배포한 경우 경로. 원격이면 절대 URL로 바꾸세요.
+
+async function loadQuiz() {
+  document.getElementById('ai').innerText = '';
+  document.getElementById('prompt').innerText = '문제 불러오는 중...';
+  document.getElementById('choices').innerHTML = '';
+
+  try {
+    const res = await fetch(API);
+    if (!res.ok) throw new Error('API 에러');
+    const data = await res.json();
+    const { prompt, answer, choices } = data;
+    document.getElementById('prompt').innerText = prompt;
+
+    const choicesDiv = document.getElementById('choices');
+    choicesDiv.innerHTML = '';
+    choices.forEach(c => {
+      const d = document.createElement('div');
+      d.className = 'choice';
+      d.innerText = c;
+      choicesDiv.appendChild(d);
+    });
+
+    // AI 자동 선택 (delay 주고 정답 마킹)
+    setTimeout(() => {
+      const nodes = document.querySelectorAll('.choice');
+      nodes.forEach(n => {
+        if (n.innerText === answer) {
+          n.classList.add('correct');
+          document.getElementById('ai').innerText = `🤖 AI가 선택한 정답: ${answer}`;
+        } else {
+          n.classList.add('wrong');
+        }
+      });
+      // 다음 문제 로드 (원하면 주석 해제)
+      setTimeout(loadQuiz, 2000);
+    }, 1200);
+
+  } catch (err) {
+    document.getElementById('prompt').innerText = '문제 불러오기 실패: ' + err.message;
+  }
+}
+
+loadQuiz();
+</script>
+</body>
+</html>
